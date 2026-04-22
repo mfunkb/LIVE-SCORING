@@ -3,74 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Rank - Professional Edition</title>
+    <title>SLS PRO BROADCAST - LIVE OVERLAY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@700&display=swap');
         
+        :root { --sls-gold: #d4af37; --sls-red: #ff3e3e; }
+
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-family: 'Barlow Condensed', sans-serif; 
             background-color: #050505; 
-            color: #e2e8f0; 
+            color: white;
+            text-transform: uppercase;
+            overflow: hidden;
         }
+
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        
-        tr { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        .glass-header { 
-            background: rgba(10, 10, 10, 0.8); 
-            backdrop-filter: blur(12px); 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-
-        @keyframes pulse-soft {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(0.98); }
+        /* Leaderboard Animations */
+        .rank-row {
+            background: linear-gradient(90deg, #0a0a0a 0%, #050505 100%);
+            border-left: 4px solid transparent;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .animate-next { animation: pulse-soft 3s infinite ease-in-out; }
+        .rank-row-top { border-left-color: var(--sls-gold); background: #111; }
+
+        /* Timer Progress Bar */
+        .timer-bar {
+            height: 4px;
+            background: var(--sls-gold);
+            transition: width 1s linear;
+            box-shadow: 0 0 15px var(--sls-gold);
+        }
+        .timer-critical { color: var(--sls-red); text-shadow: 0 0 30px rgba(255, 62, 62, 0.5); }
+        .timer-bar-critical { background: var(--sls-red); box-shadow: 0 0 15px var(--sls-red); }
+
+        /* Smooth Table Transitions */
+        tbody tr { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="overflow-hidden h-screen flex flex-col">
+<body class="h-screen flex flex-col">
 
-    <div class="glass-header p-6 flex justify-between items-center z-10">
-        <div>
-            <h1 class="text-3xl font-black italic tracking-tighter text-white">
-                SKATE<span class="text-zinc-500 underline decoration-white/20">LIVE</span>RANK
-            </h1>
-            <div id="statusInfo" class="text-[9px] uppercase tracking-[0.4em] text-zinc-500 font-bold mt-1 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                System Live: Round Robin Mode
+    <div class="bg-black border-b-4 border-[#d4af37] px-10 py-5 flex justify-between items-center shadow-2xl z-10">
+        <div class="flex items-center gap-8">
+            <div class="bg-white text-black px-5 py-1 font-black text-3xl italic tracking-tighter">SKATE</div>
+            <div>
+                <h1 id="currentClassDisplay" class="text-4xl font-black italic leading-none tracking-tighter">76 JELEK</h1>
+                <p class="text-[10px] text-[#d4af37] font-bold tracking-[0.5em] mt-1 italic">LIVE SCORE</p>
             </div>
         </div>
         
-        <div class="flex gap-2 bg-zinc-900/50 p-1.5 rounded-2xl border border-white/5">
-            <button onclick="switchTab('Beginner')" id="tabBeginner" class="px-8 py-2.5 rounded-xl text-[10px] font-black transition-all bg-white text-black shadow-xl shadow-white/5">BEGINNER</button>
-            <button onclick="switchTab('Open')" id="tabOpen" class="px-8 py-2.5 rounded-xl text-[10px] font-black transition-all text-zinc-500 hover:text-white">OPEN</button>
-            <button onclick="switchTab('Grooms')" id="tabGrooms" class="px-8 py-2.5 rounded-xl text-[10px] font-black transition-all text-zinc-500 hover:text-white">GROOMS</button>
+        <div id="eventStatus" class="flex items-center gap-4 text-zinc-500 font-bold text-xs tracking-widest">
+            <span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+            DATABASE SYNC ACTIVE
         </div>
     </div>
 
-    <div class="flex-grow p-6 overflow-y-auto">
-        <table class="w-full text-left border-separate border-spacing-y-3">
-            <thead>
-                <tr class="text-zinc-600 uppercase text-[9px] font-black tracking-[0.3em]">
-                    <th class="px-6 py-2 w-20 text-center">Rank</th>
-                    <th class="px-6 py-2">Athlete Name</th>
-                    <th class="px-4 py-2 text-center">Run 1</th>
-                    <th class="px-4 py-2 text-center">Run 2</th>
-                    <th class="px-6 py-2 text-right">Best Score</th>
-                </tr>
-            </thead>
-            <tbody id="rankTable"></tbody>
-        </table>
-    </div>
+    <div class="flex flex-grow overflow-hidden">
+        
+        <div class="w-8/12 p-10 overflow-y-auto">
+            <table class="w-full border-separate border-spacing-y-3">
+                <thead>
+                    <tr class="text-zinc-600 text-[10px] font-bold tracking-[0.4em]">
+                        <th class="px-4 py-2 text-center w-24">RANKING</th>
+                        <th class="px-4 py-2 text-left">ATHLETE NAME</th>
+                        <th class="px-4 py-2 text-center">RUN 1</th>
+                        <th class="px-4 py-2 text-center">RUN 2</th>
+                        <th class="px-4 py-2 text-right">BEST SCORE</th>
+                    </tr>
+                </thead>
+                <tbody id="rankTable"></tbody>
+            </table>
+        </div>
 
-    <div class="fixed bottom-10 right-10 z-20" id="nextSkaterContainer"></div>
+        <div class="w-4/12 bg-zinc-950 border-l border-zinc-900 flex flex-col">
+            
+            <div class="p-12 border-b border-zinc-900 bg-gradient-to-b from-zinc-900/40 to-transparent">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[#d4af37] text-[10px] font-bold tracking-[0.4em]">RUN CLOCK</span>
+                    <span id="timerStatus" class="text-[9px] text-zinc-500">REMOTE CONTROLLED</span>
+                </div>
+                <div id="timerDisplay" class="text-[130px] font-mono font-bold leading-none tracking-tighter text-white">
+                    00:45
+                </div>
+                <div class="w-full bg-zinc-800 h-1 mt-4 overflow-hidden rounded-full">
+                    <div id="timerBar" class="timer-bar" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="p-12 flex-grow flex flex-col">
+                <div id="nextSkaterInfo" class="mb-10">
+                    </div>
+
+                <div class="mt-auto">
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div class="bg-zinc-900/50 p-4 border border-zinc-800 rounded">
+                            <p class="text-[9px] text-zinc-500 mb-1">HIGHEST RUN</p>
+                            <p id="highestRun" class="text-2xl font-bold italic">0.0</p>
+                        </div>
+                        <div class="bg-zinc-900/50 p-4 border border-zinc-800 rounded">
+                            <p class="text-[9px] text-zinc-500 mb-1">TOTAL RIDERS</p>
+                            <p id="totalRiders" class="text-2xl font-bold italic">0</p>
+                        </div>
+                    </div>
+
+                    <div class="border-t-2 border-[#d4af37] pt-6">
+                        <div class="text-[#d4af37] text-[11px] font-bold tracking-[0.4em] mb-2 italic">REQUIRED FOR 1ST</div>
+                        <div id="targetToLead" class="text-8xl font-black italic leading-none text-white tracking-tighter">
+                            0.0
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 bg-black border-t border-zinc-900 flex flex-col gap-1">
+                <div id="activityFeed" class="text-[9px] text-emerald-500/70 font-bold tracking-widest italic animate-pulse">
+                    READY FOR NEXT DROP...
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://ozvuclwfyehtuywioner.supabase.co';
@@ -78,18 +132,8 @@
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let activeCategory = 'Beginner';
-
-        function switchTab(cat) {
-            activeCategory = cat;
-            document.querySelectorAll('button[id^="tab"]').forEach(b => {
-                b.classList.remove('bg-white', 'text-black');
-                b.classList.add('text-zinc-500');
-            });
-            const activeBtn = document.getElementById('tab' + cat);
-            activeBtn.classList.add('bg-white', 'text-black');
-            activeBtn.classList.remove('text-zinc-500');
-            fetchData();
-        }
+        let timeLeft = 45;
+        let timerRunning = false;
 
         async function fetchData() {
             try {
@@ -102,87 +146,96 @@
                     riderScores[s.participant_id].push(s.score);
                 });
 
-                // 1. Leaderboard: Urut Berdasarkan Skor Terbaik
-                const leaderboardData = riders.map(r => {
+                const sorted = riders.map(r => {
                     const runs = riderScores[r.id] || [];
-                    const r1 = runs[0] || 0;
-                    const r2 = runs[1] || 0;
-                    const best = Math.max(r1, r2);
-                    return { ...r, r1, r2, best };
+                    return { ...r, r1: runs[0] || 0, r2: runs[1] || 0, best: Math.max(...runs, 0) };
                 }).sort((a, b) => b.best - a.best);
 
-                renderTable(leaderboardData);
-                
-                // 2. LOGIKA PERBAIKAN: Next Skater Urut ABJAD (Sesuai Juri)
-                const alphabeticalRiders = [...riders].sort((a, b) => a.name.localeCompare(b.name));
-                
-                // Cek apakah semua sudah selesai Run 1?
-                const allDoneRun1 = alphabeticalRiders.every(r => (riderScores[r.id]?.length || 0) >= 1);
-                const currentGlobalRun = allDoneRun1 ? 2 : 1;
+                document.getElementById('totalRiders').innerText = riders.length;
+                document.getElementById('highestRun').innerText = sorted[0]?.best.toFixed(1) || "0.0";
 
-                // Cari atlet pertama (A-Z) yang belum melakukan run yang sedang berjalan
-                const nextSkater = alphabeticalRiders.find(r => (riderScores[r.id]?.length || 0) < currentGlobalRun);
+                renderTable(sorted);
                 
-                renderNext(nextSkater, currentGlobalRun);
-
-            } catch (err) { console.error("Sync Error:", err); }
+                const alphabetical = [...riders].sort((a, b) => a.name.localeCompare(b.name));
+                const allDoneR1 = alphabetical.every(r => (riderScores[r.id]?.length || 0) >= 1);
+                const currentRun = allDoneR1 ? 2 : 1;
+                const nextSkater = alphabetical.find(r => (riderScores[r.id]?.length || 0) < currentRun);
+                
+                renderActivePanel(nextSkater, currentRun, sorted[0]?.best || 0);
+            } catch (err) { console.error(err); }
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('rankTable');
             tbody.innerHTML = data.map((r, i) => `
-                <tr class="bg-zinc-900/30 border border-white/[0.02] hover:bg-zinc-900/60 transition-all">
-                    <td class="px-6 py-6 text-center">
-                        <span class="font-mono text-xs ${i < 3 ? 'text-white' : 'text-zinc-700'}">0${i + 1}</span>
-                    </td>
+                <tr class="rank-row ${i === 0 ? 'rank-row-top' : ''}">
+                    <td class="px-6 py-6 text-center font-oswald text-2xl ${i === 0 ? 'text-[#d4af37]' : 'text-zinc-800'}">0${i + 1}</td>
                     <td class="px-6 py-6">
-                        <div class="text-lg font-extrabold uppercase tracking-tight text-zinc-100">${r.name}</div>
-                        <div class="text-[8px] text-zinc-600 font-bold uppercase tracking-widest mt-0.5">Qualified Athlete</div>
+                        <div class="text-3xl font-black italic tracking-tighter leading-none">${r.name}</div>
+                        <div class="text-[9px] text-zinc-600 font-bold tracking-[0.4em] mt-1">PRO ATHLETE</div>
                     </td>
-                    <td class="px-4 py-6 text-center font-mono text-zinc-500">
-                        ${r.r1 > 0 ? r.r1.toFixed(1) : '<span class="opacity-20 text-[10px]">AWAITING</span>'}
-                    </td>
-                    <td class="px-4 py-6 text-center font-mono text-zinc-500">
-                        ${r.r2 > 0 ? r.r2.toFixed(1) : '<span class="opacity-20 text-[10px]">AWAITING</span>'}
-                    </td>
-                    <td class="px-6 py-6 text-right border-l border-white/5">
-                        <span class="text-2xl font-black text-white font-mono tracking-tighter italic">
-                            ${r.best > 0 ? r.best.toFixed(2) : '0.00'}
-                        </span>
+                    <td class="px-4 py-6 text-center font-mono text-xl text-zinc-500">${r.r1 > 0 ? r.r1.toFixed(1) : '<span class="opacity-10">-</span>'}</td>
+                    <td class="px-4 py-6 text-center font-mono text-xl text-zinc-500">${r.r2 > 0 ? r.r2.toFixed(1) : '<span class="opacity-10">-</span>'}</td>
+                    <td class="px-6 py-6 text-right font-oswald">
+                        <span class="text-4xl font-black italic ${i === 0 ? 'text-[#d4af37]' : 'text-white'}">${r.best.toFixed(1)}</span>
                     </td>
                 </tr>
             `).join('');
         }
 
-        function renderNext(rider, runNumber) {
-            const container = document.getElementById('nextSkaterContainer');
+        function renderActivePanel(rider, runNum, topScore) {
+            const info = document.getElementById('nextSkaterInfo');
+            const target = document.getElementById('targetToLead');
+            const feed = document.getElementById('activityFeed');
+
             if (!rider) {
-                container.innerHTML = `
-                    <div class="bg-zinc-900 p-6 rounded-3xl border border-white/10 shadow-2xl">
-                        <p class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Status</p>
-                        <h2 class="text-xl font-black italic text-white">ALL RUNS FINISHED</h2>
-                    </div>`;
+                info.innerHTML = `<h2 class="text-4xl font-black italic text-zinc-700">SESSION ENDED</h2>`;
+                target.innerText = "0.0";
                 return;
             }
 
-            const isRun2 = runNumber === 2;
-            container.innerHTML = `
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(255,255,255,0.1)] border-b-8 border-zinc-200 animate-next">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="px-3 py-1 rounded-full ${isRun2 ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'} text-[8px] font-black uppercase tracking-widest">
-                            Ready for Run ${runNumber}
-                        </span>
-                    </div>
-                    <h2 class="text-5xl font-black italic text-black uppercase tracking-tighter leading-none">${rider.name}</h2>
-                    <p class="text-[10px] font-bold text-zinc-400 mt-3 uppercase tracking-widest">Next Skater up to deck</p>
+            info.innerHTML = `
+                <div class="text-[#d4af37] text-[11px] font-bold tracking-[0.5em] mb-4">ON DECK / RUN ${runNum}</div>
+                <h2 class="text-8xl font-black italic leading-none tracking-tighter">${rider.name}</h2>
+                <div class="mt-6 flex items-center gap-3">
+                    <span class="bg-emerald-500 text-black px-3 py-0.5 text-[9px] font-black">ACTIVE</span>
+                    <span class="text-[9px] font-bold text-zinc-500 tracking-widest uppercase">Waiting for drop in...</span>
                 </div>
             `;
+            target.innerText = (topScore + 0.1).toFixed(1);
+            feed.innerText = `LATEST: ${rider.name.toUpperCase()} IS READY FOR RUN ${runNum}`;
         }
 
-        db.channel('preview_sync').on('postgres_changes', { event: '*', schema: 'public', table: 'scores' }, fetchData).subscribe();
-        db.channel('rider_sync').on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, fetchData).subscribe();
+        // Timer Sync Logic (Placeholder: Sesuaikan dengan kolom 'timer' di DB kamu nanti)
+        function updateTimerUI() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            const display = document.getElementById('timerDisplay');
+            const bar = document.getElementById('timerBar');
+            
+            display.innerText = `0${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            bar.style.width = `${(timeLeft / 45) * 100}%`;
 
-        document.addEventListener('DOMContentLoaded', fetchData);
+            if (timeLeft <= 10) {
+                display.classList.add('timer-critical');
+                bar.classList.add('timer-bar-critical');
+            } else {
+                display.classList.remove('timer-critical');
+                bar.classList.remove('timer-bar-critical');
+            }
+        }
+
+        function switchTab(cat) {
+            activeCategory = cat;
+            document.getElementById('currentClassDisplay').innerText = `WORLD TOUR: ${cat.toUpperCase()}`;
+            fetchData();
+        }
+
+        db.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: '*' }, fetchData).subscribe();
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+            updateTimerUI();
+        });
     </script>
 </body>
 </html>
