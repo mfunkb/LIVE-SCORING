@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Skate Manager PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: radial-gradient(circle at top right, #1e1b4b, #020617);
+            background-attachment: fixed;
+            color: #f8fafc; 
+        }
+
+        .glass-card { 
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .tab-active { 
+            background: #3b82f6 !important; 
+            color: white !important;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+        }
+
+        input, select {
+            background: rgba(2, 6, 23, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .skater-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Status Badge Animations */
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        }
+        .finalist-active {
+            animation: pulse-gold 2s infinite;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10 min-h-screen">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div class="space-y-1">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-2 bg-blue-500 rounded-full"></div>
+                    <h1 class="text-4xl font-black tracking-tighter text-white uppercase italic">Management<span class="text-blue-500 ml-2">Center</span></h1>
+                </div>
+                <p class="text-slate-400 text-xs uppercase tracking-[0.4em] font-semibold opacity-70">Competition Control & Finalist Selection</p>
+            </div>
+            
+            <div class="glass-card px-8 py-4 rounded-[2rem] flex items-center gap-6 border-l-4 border-blue-500">
+                <div class="text-right">
+                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest">Total Registered</p>
+                    <p id="totalCount" class="text-4xl font-black text-white leading-none mt-1 font-mono">0</p>
+                </div>
+                <div class="h-10 w-px bg-slate-800"></div>
+                <div class="bg-blue-500/10 p-3 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-4">
+                <div class="glass-card p-8 rounded-[2.5rem] sticky top-8">
+                    <h2 class="text-xl font-black mb-8 flex items-center gap-3 text-white italic uppercase tracking-tight">
+                        Input Skater
+                    </h2>
+                    
+                    <div class="space-y-5">
+                        <input type="hidden" id="skaterId">
+                        
+                        <div class="group">
+                            <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest mb-2 block">Nama Lengkap</label>
+                            <input type="text" id="name" class="w-full p-4 rounded-2xl outline-none text-white font-semibold uppercase tracking-tight" placeholder="NAMA PESERTA">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest mb-2 block">Kategori</label>
+                            <select id="category" class="w-full p-4 rounded-2xl outline-none text-white font-bold appearance-none cursor-pointer">
+                                <option value="Beginner">Beginner</option>
+                                <option value="Open">Open</option>
+                                <option value="Grooms">Grooms</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest mb-2 block">Asal Kota</label>
+                                <input type="text" id="city" class="w-full p-4 rounded-2xl outline-none text-white text-sm" placeholder="KOTA">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest mb-2 block">Sponsor</label>
+                                <input type="text" id="sponsor" class="w-full p-4 rounded-2xl outline-none text-white text-sm" placeholder="SPONSOR">
+                            </div>
+                        </div>
+
+                        <div class="pt-6 space-y-3">
+                            <button onclick="saveSkater()" id="btnSave" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-600/20 uppercase tracking-widest text-sm italic">
+                                Save Skater
+                            </button>
+                            <button onclick="resetForm()" class="w-full bg-slate-800/50 hover:bg-slate-800 text-slate-400 font-bold py-3 rounded-2xl text-[10px] uppercase tracking-[0.3em] transition-all">
+                                Reset Form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8">
+                <div class="glass-card rounded-[2.5rem] overflow-hidden border border-white/5">
+                    
+                    <div class="flex p-3 bg-slate-950/50 gap-2">
+                        <button onclick="setTab('Beginner')" id="tabBeginner" class="flex-1 py-3 text-[11px] font-black tracking-widest rounded-2xl text-slate-500 uppercase transition-all tab-active">Beginner</button>
+                        <button onclick="setTab('Open')" id="tabOpen" class="flex-1 py-3 text-[11px] font-black tracking-widest rounded-2xl text-slate-500 uppercase transition-all">Open</button>
+                        <button onclick="setTab('Grooms')" id="tabGrooms" class="flex-1 py-3 text-[11px] font-black tracking-widest rounded-2xl text-slate-500 uppercase transition-all">Grooms</button>
+                    </div>
+
+                    <div class="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Participant Database</span>
+                        </div>
+                        <div class="relative w-full md:w-72">
+                            <input type="text" oninput="handleSearch(this.value)" placeholder="Search skater..." class="w-full bg-slate-950/50 p-3 px-6 rounded-full text-xs outline-none focus:ring-2 ring-blue-500/20 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute right-4 top-3 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-[9px] text-slate-500 uppercase tracking-[0.3em] bg-slate-900/30">
+                                    <th class="p-6">Skater Profile</th>
+                                    <th class="p-6">Performance</th>
+                                    <th class="p-6 text-center">Final Selection</th>
+                                    <th class="p-6 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="skaterTableBody" class="divide-y divide-white/5">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ozvuclwfyehtuywioner.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96dnVjbHdmeWVodHV5d2lvbmVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTE1MjcsImV4cCI6MjA5MjI2NzUyN30.H1t75CTSEXb5s_BnCRKEnWCyBM7sFVJeQVKJu4vPHww';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allSkaters = [];
+        let currentTab = 'Beginner';
+        let searchQuery = '';
+
+        async function loadSkaters() {
+            const { data, error } = await db.from('participants').select('*').order('created_at', { ascending: false });
+            if (error) return console.error(error);
+            allSkaters = data;
+            renderFilteredTable();
+            document.getElementById('totalCount').innerText = data.length;
+        }
+
+        function setTab(cat) {
+            currentTab = cat;
+            document.querySelectorAll('button[id^="tab"]').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-slate-500');
+            });
+            document.getElementById('tab' + cat).classList.add('tab-active');
+            document.getElementById('tab' + cat).classList.remove('text-slate-500');
+            renderFilteredTable();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val.toLowerCase();
+            renderFilteredTable();
+        }
+
+        function renderFilteredTable() {
+            const filtered = allSkaters.filter(s => 
+                s.category === currentTab && 
+                s.name.toLowerCase().includes(searchQuery)
+            );
+
+            const body = document.getElementById('skaterTableBody');
+            if (filtered.length === 0) {
+                body.innerHTML = `<tr><td colspan="4" class="p-20 text-center text-slate-600 text-[10px] font-black uppercase tracking-widest">No data available for ${currentTab}</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = filtered.map(s => `
+                <tr class="skater-row transition-all group">
+                    <td class="p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="h-10 w-10 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl flex items-center justify-center font-black text-blue-500 border border-white/5">
+                                ${s.name.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="font-black text-white uppercase text-base tracking-tight">${s.name}</div>
+                                <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <span>${s.city || 'LOCAL'}</span>
+                                    <span class="w-1 h-1 bg-slate-700 rounded-full"></span>
+                                    <span class="text-blue-400/80">${s.sponsor || 'NO SPONSOR'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-6">
+                        <div class="text-2xl font-black italic font-mono ${s.final_score > 0 ? 'text-green-400' : 'text-slate-800'}">
+                            ${s.final_score ? s.final_score.toFixed(2) : '0.00'}
+                        </div>
+                        <div class="text-[8px] font-black text-slate-600 uppercase tracking-tighter">Current Points</div>
+                    </td>
+                    <td class="p-6 text-center">
+                        <button onclick="toggleFinalist(${s.id}, ${s.is_finalist})" 
+                                class="px-5 py-2 rounded-xl text-[9px] font-black transition-all border inline-flex items-center gap-2
+                                ${s.is_finalist 
+                                    ? 'bg-yellow-500 text-black border-yellow-400 finalist-active' 
+                                    : 'bg-slate-900 text-slate-500 border-white/5 hover:border-blue-500 hover:text-white'}">
+                            ${s.is_finalist ? '🏆 FINALIST' : 'SELECT FINAL'}
+                        </button>
+                    </td>
+                    <td class="p-6 text-right">
+                        <div class="flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <button onclick="editSkater(${s.id})" class="p-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button onclick="deleteSkater(${s.id})" class="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Fungsi saveSkater, toggleFinalist, deleteSkater, editSkater, resetForm tetap sama 
+        // Hanya visualnya saja yang terpengaruh oleh ID-ID di atas.
+
+        async function saveSkater() {
+            const id = document.getElementById('skaterId').value;
+            const payload = {
+                name: document.getElementById('name').value,
+                category: document.getElementById('category').value,
+                city: document.getElementById('city').value,
+                sponsor: document.getElementById('sponsor').value
+            };
+            if (!payload.name) return alert("Nama harus diisi!");
+            if (id) {
+                await db.from('participants').update(payload).eq('id', id);
+            } else {
+                await db.from('participants').insert([payload]);
+            }
+            resetForm();
+            loadSkaters();
+        }
+
+        async function toggleFinalist(id, currentStatus) {
+            const newStatus = !currentStatus;
+            const updateData = { is_finalist: newStatus };
+            if (newStatus === true) updateData.final_score = 0;
+            const { error } = await db.from('participants').update(updateData).eq('id', id);
+            if (!error) loadSkaters();
+        }
+
+        async function deleteSkater(id) {
+            if (confirm("Hapus peserta ini?")) {
+                await db.from('participants').delete().eq('id', id);
+                loadSkaters();
+            }
+        }
+
+        function editSkater(id) {
+            const s = allSkaters.find(x => x.id === id);
+            document.getElementById('skaterId').value = s.id;
+            document.getElementById('name').value = s.name;
+            document.getElementById('category').value = s.category;
+            document.getElementById('city').value = s.city || '';
+            document.getElementById('sponsor').value = s.sponsor || '';
+            document.getElementById('btnSave').innerText = "Update Skater";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('skaterId').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('sponsor').value = '';
+            document.getElementById('btnSave').innerText = "Save Skater";
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSkaters);
+        db.channel('admin_live').on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, loadSkaters).subscribe();
+    </script>
+</body>
+</html>

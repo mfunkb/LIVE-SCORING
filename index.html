@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkateControl Center - Official System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+        
+        :root {
+            --blue-primary: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.5);
+            --emerald-primary: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.4);
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #020617; 
+            background-image: 
+                radial-gradient(circle at 50% -20%, #1e293b, transparent),
+                radial-gradient(circle at 0% 100%, #0f172a, transparent);
+            min-h-screen;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animated Grid Background */
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            perspective: 1000px;
+            transform: rotateX(60deg) translateY(-100px);
+            z-index: -1;
+            mask-image: linear-gradient(to bottom, transparent, black);
+        }
+
+        .glass { 
+            background: rgba(15, 23, 42, 0.4); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,255,255,0.08); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-8px);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .hover-blue:hover {
+            border-color: var(--blue-primary);
+            box-shadow: 0 0 30px var(--blue-glow);
+        }
+
+        .hover-emerald:hover {
+            border-color: var(--emerald-primary);
+            box-shadow: 0 0 30px var(--emerald-glow);
+        }
+
+        .modal-blur {
+            backdrop-filter: blur(8px) saturate(180%);
+        }
+
+        .glitch {
+            text-shadow: 2px 0 #3b82f6, -2px 0 #ef4444;
+        }
+    </style>
+</head>
+<body class="text-slate-200 p-6">
+
+    <div class="grid-bg"></div>
+
+    <div class="max-w-6xl w-full text-center relative z-10">
+        <div class="mb-16 inline-block">
+            <div class="flex items-center justify-center gap-4 mb-2">
+                <div class="h-[2px] w-12 bg-blue-500 rounded-full"></div>
+                <span class="text-[10px] font-black tracking-[0.5em] text-blue-400 uppercase">System v3.0 Powered by Veo</span>
+                <div class="h-[2px] w-12 bg-blue-500 rounded-full"></div>
+            </div>
+            <h1 class="text-6xl md:text-8xl font-black italic tracking-tighter text-white uppercase leading-none glitch">
+                SKATE<span class="text-blue-500">CONTROL</span>
+            </h1>
+            <p class="text-slate-500 uppercase tracking-[0.4em] text-[10px] mt-4 font-black">Professional Event Scoring Management</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
+            
+            <a href="juri.html" class="glass p-8 rounded-[3rem] transition-all card-hover hover-blue group flex flex-col items-center">
+                <div class="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center text-4xl mb-6 group-hover:bg-blue-500/20 transition-all border border-white/5 group-hover:border-blue-500/30">
+                    ⚖️
+                </div>
+                <h2 class="text-xl font-black uppercase italic tracking-tight text-white">Judge Panel</h2>
+                <div class="h-1 w-8 bg-blue-500/30 my-4 rounded-full group-hover:w-16 transition-all"></div>
+                <p class="text-slate-500 text-[9px] font-black uppercase tracking-widest leading-relaxed">Input scoring data & performance</p>
+            </a>
+
+            <a href="headjudge.html" class="glass p-8 rounded-[3rem] transition-all card-hover hover-emerald group flex flex-col items-center border-t-4 border-emerald-500/50">
+                <div class="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-4xl mb-6 group-hover:bg-emerald-500 transition-all border border-emerald-500/30 group-hover:text-white">
+                    👑
+                </div>
+                <h2 class="text-xl font-black uppercase italic tracking-tight text-emerald-400">Head Judge</h2>
+                <div class="h-1 w-8 bg-emerald-500/30 my-4 rounded-full group-hover:w-16 transition-all"></div>
+                <p class="text-slate-500 text-[9px] font-black uppercase tracking-widest leading-relaxed">Final Approval & Validation</p>
+            </a>
+
+            <button onclick="toggleModal()" class="glass p-8 rounded-[3rem] transition-all card-hover hover-blue group flex flex-col items-center">
+                <div class="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center text-4xl mb-6 group-hover:bg-blue-600 transition-all border border-blue-500/30">
+                    📺
+                </div>
+                <h2 class="text-xl font-black uppercase italic tracking-tight text-white">Live View</h2>
+                <div class="h-1 w-8 bg-blue-500 my-4 rounded-full group-hover:w-16 transition-all"></div>
+                <p class="text-slate-500 group-hover:text-blue-100 text-[9px] font-black uppercase tracking-widest leading-relaxed">Broadcast to monitors</p>
+            </button>
+
+            <a href="admin.html" class="glass p-8 rounded-[3rem] transition-all card-hover hover-blue group flex flex-col items-center">
+                <div class="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center text-4xl mb-6 group-hover:bg-blue-500/20 transition-all border border-white/5 group-hover:border-blue-500/30">
+                    ⚙️
+                </div>
+                <h2 class="text-xl font-black uppercase italic tracking-tight text-white">Admin Center</h2>
+                <div class="h-1 w-8 bg-blue-500/30 my-4 rounded-full group-hover:w-16 transition-all"></div>
+                <p class="text-slate-500 text-[9px] font-black uppercase tracking-widest leading-relaxed">Database & Selection</p>
+            </a>
+            
+        </div>
+
+        <div class="mt-20 flex justify-center items-center gap-8 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+            <div class="font-mono text-[9px] tracking-widest uppercase">System Status: Active</div>
+            <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+            <div class="font-mono text-[9px] tracking-widest uppercase">Cloud Sync: Online</div>
+        </div>
+    </div>
+
+    <div id="previewModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-50 transition-all duration-300 transform scale-95">
+        <div class="absolute inset-0 bg-slate-950/80 modal-blur" onclick="toggleModal()"></div>
+        
+        <div class="glass w-full max-w-lg mx-auto rounded-[3.5rem] z-50 overflow-hidden border-t-8 border-blue-600 p-10 relative">
+            <div class="text-center mb-10">
+                <div class="bg-blue-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
+                    <span class="text-3xl">📡</span>
+                </div>
+                <h3 class="text-3xl font-black italic uppercase tracking-tighter text-white">Broadcast Mode</h3>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Pilih Tampilan Layar Utama</p>
+            </div>
+
+            <div class="grid gap-4">
+                <a href="preview.html" class="flex items-center gap-6 p-6 bg-slate-900/50 hover:bg-blue-600 rounded-[2rem] transition-all border border-white/5 group hover:scale-[1.02] active:scale-95">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-white group-hover:text-blue-600 transition-all font-bold italic">Q</div>
+                    <div class="text-left">
+                        <div class="font-black uppercase text-lg italic tracking-tight group-hover:text-white">Qualification</div>
+                        <div class="text-[9px] text-slate-500 group-hover:text-blue-100 font-black uppercase tracking-widest mt-1">Best Run System</div>
+                    </div>
+                </a>
+
+                <a href="preview_final.html" class="flex items-center gap-6 p-6 bg-slate-900/50 hover:bg-yellow-600 rounded-[2rem] transition-all border border-white/5 group hover:scale-[1.02] active:scale-95">
+                    <div class="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-white group-hover:text-yellow-600 transition-all font-bold italic">F</div>
+                    <div class="text-left">
+                        <div class="font-black uppercase text-lg italic tracking-tight group-hover:text-white text-yellow-500">Final Stage</div>
+                        <div class="text-[9px] text-slate-500 group-hover:text-yellow-100 font-black uppercase tracking-widest mt-1">Podium & Winners</div>
+                    </div>
+                </a>
+            </div>
+
+            <button onclick="toggleModal()" class="mt-8 text-slate-600 hover:text-white text-[10px] font-black uppercase tracking-[0.3em] block w-full text-center transition-colors">Close Command Center</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.toggle('opacity-0');
+            modal.classList.toggle('pointer-events-none');
+            modal.classList.toggle('scale-95');
+            modal.classList.toggle('scale-100');
+        }
+    </script>
+
+</body>
+</html>
